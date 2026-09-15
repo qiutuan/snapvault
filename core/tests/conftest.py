@@ -36,6 +36,13 @@ def db(db_path: Path) -> Database:
 
 
 @pytest.fixture()
+def asset(db) -> int:
+    return db.execute(
+        "INSERT INTO assets(path, sha256) VALUES ('/asset.png', 'hash1') RETURNING id"
+    ).fetchone()[0]
+
+
+@pytest.fixture()
 def make_image(tmp_path: Path):
     """生成一张带文字的测试图片，返回 (path, text)。"""
     from PIL import Image, ImageDraw, ImageFont
