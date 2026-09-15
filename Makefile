@@ -1,6 +1,7 @@
 # SnapVault 统一测试/构建入口
 PYTHON ?= python3
 PIP ?= pip3
+export PYTHONPATH := core
 
 .PHONY: install test unit coverage quality perf stability recovery e2e build clean
 
@@ -12,9 +13,10 @@ install:
 unit:
 	$(PYTHON) -m pytest core/tests -q
 
-# 覆盖率报告（>=80%）
+# 覆盖率报告（core 层全量测试 >=80%，写入 reports/coverage.json）
 coverage:
-	$(PYTHON) -m pytest core/tests --cov=snapvault --cov-report=term-missing --cov-report=html:reports/coverage -q
+	$(PYTHON) -m pytest core/tests tests/integration tests/quality \
+		--cov=snapvault --cov-report=term --cov-report=json:reports/coverage.json -q
 
 # 检索质量测试（>=200 张合成图，Top-5 >=95%）
 quality:
