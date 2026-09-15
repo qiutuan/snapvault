@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+
+# Node / Tauri
+node_modules/
+app/src-tauri/target/
+app/dist/
+app/node_modules/
+
+# Rust
+target/
+
+# Runtime data (never commit user data)
+data/
+*.db
+*.db-wal
+*.db-shm
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Generated artifacts
+exports/
+reports/*.html
+reports/*.pdf
+*.zip
+*.tar.gz
+*.mp4
+*.gif
+
+# IDE
+.idea/
+.vscode/
