@@ -20,6 +20,7 @@ from .annotations import AnnotationModel, AnnotationStore, rasterize
 from .config import Config
 from .db import Database
 from .exceptions import ExportError
+from .importer import validate_image
 from .logging_setup import log_event
 from .search import SearchFilter, build_asset_filter
 from .util import atomic_write, human_size
@@ -160,6 +161,11 @@ class Exporter:
             raise FileNotFoundError(f"原图缺失: {src}")
         fname = f"{asset['id']:06d}_{src.name}"
         target = images_out / fname
+        # 可读性校验：损坏图片在此被隔离（单条错误，不影响整包导出）
+        try:
+            validate_image(src)
+        except ValueError as exc:
+            raise ValueError(f"图片已损坏，已隔离: {exc}") from exc
         if include == "original":
             shutil.copyfile(src, target)
             return fname

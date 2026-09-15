@@ -460,6 +460,35 @@ def cmd_verify(args) -> int:
         engine.close()
 
 
+def cmd_screenshot(args) -> int:
+    from .screenshot import capture
+
+    engine = SnapVault(args.data_dir)
+    try:
+        region = tuple(int(v) for v in args.region.split(",")) if args.region else None
+        shot = capture(engine.config.images_dir(), monitor=args.monitor,
+                       region=region, source=args.source)
+        print(f"已截图: {shot.path} ({shot.width}x{shot.height})")
+        if args.import_:
+            rep = engine.import_files([shot.path], source=args.source)
+            print(f"已入库: {len(rep.imported)} 张")
+    finally:
+        engine.close()
+    return 0
+
+
+def cmd_serve(args) -> int:
+    from .server import serve
+
+    httpd = serve(port=args.port, data_dir=args.data_dir)
+    print(f"SnapVault 本地服务: http://127.0.0.1:{args.port}  （仅本机，Ctrl+C 退出）")
+    try:
+        httpd.serve_forever()
+    except KeyboardInterrupt:
+        print("\n已停止")
+    return 0
+
+
 def cmd_version(args) -> int:
     from . import __version__
 
@@ -577,6 +606,17 @@ def build_parser() -> argparse.ArgumentParser:
 
     sp = sub.add_parser("verify-integrity", help="数据库完整性校验")
     sp.set_defaults(func=cmd_verify)
+
+    sp = sub.add_parser("screenshot", help="屏幕截图（monitor=0 表示所有屏幕）")
+    sp.add_argument("--monitor", type=int, default=0)
+    sp.add_argument("--region", default=None, help="X,Y,W,H")
+    sp.add_argument("--source", default="screen")
+    sp.add_argument("--import", dest="import_", action="store_true", help="截图后直接入库")
+    sp.set_defaults(func=cmd_screenshot)
+
+    sp = sub.add_parser("serve", help="启动本地 Web 演示服务（仅 127.0.0.1）")
+    sp.add_argument("--port", type=int, default=8765)
+    sp.set_defaults(func=cmd_serve)
 
     sp = sub.add_parser("version", help="版本")
     sp.set_defaults(func=cmd_version)

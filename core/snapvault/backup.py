@@ -146,14 +146,21 @@ class BackupManager:
             decrypt_file(db_file, tmp, decrypt_passphrase)
             db_file = tmp
 
-        # 恢复前备份当前库
+        # 恢复前备份当前库（若当前库已损坏则跳过，保证可从坏库恢复）
         pre = self.config.db_path().with_suffix(".pre_restore.db")
-        src = self.db._conn()
-        with open_database(pre) as dst:
-            src.backup(dst)
-        dst = open_database(pre)
-        dst.execute("PRAGMA wal_checkpoint(TRUNCATE)")
-        dst.close()
+        try:
+            src = self.db._conn()
+            with open_database(pre) as dst:
+                src.backup(dst)
+            dst = open_database(pre)
+            dst.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+            dst.close()
+            pre_backup_ok = True
+        except Exception as exc:  # noqa: BLE001
+            pre_backup_ok = False
+            logger.warning("恢复前备份当前库失败（可能已损坏），跳过: %s", exc)
+            if pre.exists():
+                pre.unlink()
 
         target = self.config.db_path()
         self.db.close()
