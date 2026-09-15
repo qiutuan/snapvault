@@ -64,6 +64,60 @@ def fts_query_escape(q: str) -> str:
     return " ".join(parts)
 
 
+def build_asset_filter(f: SearchFilter, alias: str = "a") -> tuple[str, list[Any]]:
+    """把组合过滤转成 SQL WHERE 子句（不含 id 条件）。供检索与导出共用。"""
+    conds: list[str] = []
+    params: list[Any] = []
+    a = alias
+    if not f.include_trashed:
+        conds.append(f"{a}.deleted_at IS NULL")
+    if f.date_from:
+        conds.append(f"date({a}.created_at) >= ?")
+        params.append(f.date_from)
+    if f.date_to:
+        conds.append(f"date({a}.created_at) <= ?")
+        params.append(f.date_to)
+    if f.min_width is not None:
+        conds.append(f"{a}.width >= ?")
+        params.append(f.min_width)
+    if f.max_width is not None:
+        conds.append(f"{a}.width <= ?")
+        params.append(f.max_width)
+    if f.min_height is not None:
+        conds.append(f"{a}.height >= ?")
+        params.append(f.min_height)
+    if f.max_height is not None:
+        conds.append(f"{a}.height <= ?")
+        params.append(f.max_height)
+    if f.min_confidence is not None:
+        conds.append(f"{a}.ocr_confidence IS NOT NULL AND {a}.ocr_confidence >= ?")
+        params.append(f.min_confidence)
+    if f.max_confidence is not None:
+        conds.append(f"{a}.ocr_confidence IS NOT NULL AND {a}.ocr_confidence <= ?")
+        params.append(f.max_confidence)
+    if f.tags:
+        op = " OR " if f.tag_any else " AND "
+        subs = []
+        for tag in f.tags:
+            subs.append(
+                f"EXISTS (SELECT 1 FROM asset_tags at2 JOIN tags t ON t.id = at2.tag_id "
+                f"WHERE at2.asset_id = {a}.id AND (t.name = ? OR t.name LIKE ?))"
+            )
+            params.extend([tag, tag.rstrip("/") + "/%"])
+        conds.append("(" + op.join(subs) + ")")
+    if f.custom_fields:
+        for key, value in f.custom_fields.items():
+            conds.append(
+                f"EXISTS (SELECT 1 FROM custom_field_values cfv "
+                f"JOIN custom_field_defs cfd ON cfd.id = cfv.field_id "
+                f"WHERE cfv.asset_id = {a}.id AND cfd.key = ? AND cfv.value = ?)"
+            )
+            params.extend([key, value])
+    if not conds:
+        return "1=1", []
+    return " AND ".join(conds), params
+
+
 class HybridSearch:
     def __init__(self, db: Database, embedder: EmbeddingEngine | None = None,
                  notes_in_fts: bool = True):
@@ -194,59 +248,9 @@ class HybridSearch:
 
     # ------------------------------------------------------------------
     def _passes_filters(self, asset_id: int, f: SearchFilter) -> bool:
-        conds = ["a.id = ?"]
-        params: list[Any] = [asset_id]
-        if not f.include_trashed:
-            conds.append("a.deleted_at IS NULL")
-        if f.date_from:
-            conds.append("date(a.created_at) >= ?")
-            params.append(f.date_from)
-        if f.date_to:
-            conds.append("date(a.created_at) <= ?")
-            params.append(f.date_to)
-        if f.min_width is not None:
-            conds.append("a.width >= ?")
-            params.append(f.min_width)
-        if f.max_width is not None:
-            conds.append("a.width <= ?")
-            params.append(f.max_width)
-        if f.min_height is not None:
-            conds.append("a.height >= ?")
-            params.append(f.min_height)
-        if f.max_height is not None:
-            conds.append("a.height <= ?")
-            params.append(f.max_height)
-        if f.min_confidence is not None:
-            conds.append("a.ocr_confidence IS NOT NULL AND a.ocr_confidence >= ?")
-            params.append(f.min_confidence)
-        if f.max_confidence is not None:
-            conds.append("a.ocr_confidence IS NOT NULL AND a.ocr_confidence <= ?")
-            params.append(f.max_confidence)
-        if f.tags:
-            tag_conds, tag_params = self._tag_conditions(f.tags, f.tag_any)
-            conds.append(tag_conds)
-            params.extend(tag_params)
-        if f.custom_fields:
-            for key, value in f.custom_fields.items():
-                conds.append(
-                    "EXISTS (SELECT 1 FROM custom_field_values cfv "
-                    "JOIN custom_field_defs cfd ON cfd.id = cfv.field_id "
-                    "WHERE cfv.asset_id = a.id AND cfd.key = ? AND cfv.value = ?)"
-                )
-                params.extend([key, value])
-        sql = "SELECT COUNT(*) FROM assets a WHERE " + " AND ".join(conds)
-        return bool(self.db.scalar(sql, tuple(params)))
-
-    def _tag_conditions(self, tags: list[str], any_match: bool) -> tuple[str, list]:
-        op = " OR " if any_match else " AND "
-        subs, params = [], []
-        for tag in tags:
-            subs.append(
-                "EXISTS (SELECT 1 FROM asset_tags at2 JOIN tags t ON t.id = at2.tag_id "
-                "WHERE at2.asset_id = a.id AND (t.name = ? OR t.name LIKE ?))"
-            )
-            params.extend([tag, tag.rstrip("/") + "/%"])
-        return "(" + op.join(subs) + ")", params
+        clause, params = build_asset_filter(f)
+        sql = f"SELECT COUNT(*) FROM assets a WHERE a.id = ? AND {clause}"
+        return bool(self.db.scalar(sql, (asset_id, *params)))
 
     # ------------------------------------------------------------------
     def _fragment(self, asset_id: int, query: str) -> str:
