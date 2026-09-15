@@ -158,8 +158,8 @@ class Importer:
                 (
                     str(target), str(path), sha, width, height, fmt,
                     len(data), source,
-                    when.strftime("%Y-%m-%dT%H:%M:%fZ"),
-                    when.strftime("%Y-%m-%dT%H:%M:%fZ"),
+                    when.strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
+                    when.strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
                 ),
             )
             asset_id = cur.fetchone()[0]

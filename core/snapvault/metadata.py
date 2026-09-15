@@ -139,7 +139,7 @@ class MetadataService:
                 "INSERT INTO notes(asset_id, content, updated_at) VALUES (?, ?, ?) "
                 "ON CONFLICT(asset_id) DO UPDATE SET "
                 "content=excluded.content, updated_at=excluded.updated_at",
-                (asset_id, content, datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%fZ")),
+                (asset_id, content, datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ")),
             )
             conn.execute("DELETE FROM notes_fts WHERE asset_id=?", (asset_id,))
             if content.strip():
@@ -222,7 +222,7 @@ class MetadataService:
     # 回收站（软删除，30 天可恢复）
     # ==================================================================
     def trash(self, asset_id: int, reason: str = "manual") -> None:
-        now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%fZ")
+        now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
         with self.db.tx() as conn:
             conn.execute(
                 "UPDATE assets SET deleted_at=?, deleted_reason=? WHERE id=? AND deleted_at IS NULL",
@@ -271,7 +271,7 @@ class MetadataService:
         from pathlib import Path
 
         cutoff = (datetime.now(timezone.utc) - timedelta(days=self.config.recycle_bin_days)
-                  ).strftime("%Y-%m-%dT%H:%M:%fZ")
+                  ).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
         rows = self.db.query(
             "SELECT id, path FROM assets WHERE deleted_at IS NOT NULL AND deleted_at < ?",
             (cutoff,),

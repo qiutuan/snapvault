@@ -13,6 +13,7 @@ from datetime import datetime, timezone
 from typing import Iterable
 
 from .db import Database
+from .timeutil import utc_from_epoch, utc_now
 
 STATUS_PENDING = "pending"
 STATUS_RUNNING = "running"
@@ -22,17 +23,19 @@ STATUS_SKIPPED = "skipped"
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%fZ")
+    return utc_now()
 
 
 def _iso_to_ts(iso: str | None) -> float:
     if not iso:
         return 0.0
-    try:
-        dt = datetime.strptime(iso, "%Y-%m-%dT%H:%M:%fZ")
-        return dt.replace(tzinfo=timezone.utc).timestamp()
-    except ValueError:
-        return 0.0
+    for fmt in ("%Y-%m-%dT%H:%M:%S.%fZ", "%Y-%m-%dT%H:%M:%fZ"):  # 新格式 + 旧版兼容
+        try:
+            dt = datetime.strptime(iso, fmt)
+            return dt.replace(tzinfo=timezone.utc).timestamp()
+        except ValueError:
+            continue
+    return 0.0
 
 
 class JobManager:
@@ -114,9 +117,7 @@ class JobManager:
             )
             return
         delay = backoff_base * (2 ** (attempts - 1)) + random.uniform(0, 0.5)
-        retry_at = datetime.fromtimestamp(
-            time.time() + delay, tz=timezone.utc
-        ).strftime("%Y-%m-%dT%H:%M:%fZ")
+        retry_at = utc_from_epoch(time.time() + delay)
         self.db.execute(
             "UPDATE jobs SET status='pending', next_retry_at=?, error=? WHERE id=?",
             (retry_at, error[:2000], job_id),
