@@ -27,6 +27,9 @@ dev = [
     "pytest-cov>=5.0",
 ]
 
+[project.scripts]
+snapvault = "snapvault.cli:main"
+
 [tool.setuptools.packages.find]
 where = ["core"]
 

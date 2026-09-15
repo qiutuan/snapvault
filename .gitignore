@@ -46,3 +46,4 @@ reports/*.pdf
 # IDE
 .idea/
 .vscode/
+.models-cache/
