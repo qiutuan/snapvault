@@ -30,6 +30,9 @@ dev = [
 [tool.setuptools.packages.find]
 where = ["core"]
 
+[tool.setuptools.package-data]
+snapvault = ["models/rapidocr/*.onnx", "models/rapidocr/*.md", "py.typed"]
+
 [tool.pytest.ini_options]
 testpaths = ["core/tests", "tests"]
 addopts = "-q"

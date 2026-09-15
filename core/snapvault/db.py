@@ -27,6 +27,8 @@ def open_database(db_path: str | Path) -> sqlite3.Connection:
     conn = sqlite3.connect(str(db_path), timeout=30, check_same_thread=False)
     try:
         conn.row_factory = sqlite3.Row
+        # 关闭隐式事务：所有多步写入必须显式走 Database.tx()，保证原子性
+        conn.isolation_level = None
         conn.execute("PRAGMA foreign_keys = ON")
         for stmt in _WAL_PRAGMAS.split(";"):
             stmt = stmt.strip()
