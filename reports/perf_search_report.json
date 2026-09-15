@@ -1,0 +1,10 @@
+{
+  "suite": "perf-search",
+  "assets": 10000,
+  "queries": 60,
+  "p50_ms": 17.2,
+  "p95_ms": 18.1,
+  "max_ms": 804.5,
+  "budget_ms": 300,
+  "passed": true
+}

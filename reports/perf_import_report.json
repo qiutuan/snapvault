@@ -1,0 +1,8 @@
+{
+  "suite": "perf-import",
+  "images": 1000,
+  "wall_sec": 5.3,
+  "jobs_processed": 3000,
+  "peak_rss_mb": 515.3,
+  "current_rss_mb": 387.9
+}

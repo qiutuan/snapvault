@@ -1,0 +1,10 @@
+{
+  "suite": "stability",
+  "images": 20,
+  "kill_timing": "during-ocr-before-commit",
+  "integrity_ok": true,
+  "orphans": 0,
+  "half_written": 0,
+  "jobs_recovered": true,
+  "passed": true
+}

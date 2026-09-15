@@ -1,0 +1,8 @@
+{
+  "suite": "quality",
+  "total_images": 240,
+  "top5_keyword_hits": 240,
+  "top5_keyword_rate": 1.0,
+  "p95_latency_ms": 10.3,
+  "threshold": 0.95
+}

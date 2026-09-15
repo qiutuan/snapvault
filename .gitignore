@@ -24,6 +24,7 @@ target/
 
 # Runtime data (never commit user data)
 data/
+demo-data/
 *.db
 *.db-wal
 *.db-shm

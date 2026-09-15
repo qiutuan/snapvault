@@ -1,0 +1,7 @@
+{
+  "suite": "quality-semantic",
+  "total_images": 30,
+  "top5_semantic_hits": 28,
+  "top5_semantic_rate": 0.9333,
+  "threshold": 0.9
+}

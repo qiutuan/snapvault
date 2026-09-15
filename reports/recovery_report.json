@@ -1,0 +1,11 @@
+{
+  "suite": "recovery",
+  "passed": true,
+  "checks": [
+    "corrupt_db_fails_gracefully",
+    "restore_from_backup",
+    "corrupt_image_isolated",
+    "export_isolates_bad_image",
+    "rebuild_skips_corrupt"
+  ]
+}
