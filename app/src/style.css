@@ -1,0 +1,22 @@
+:root {
+  --bg: #f5f6f8; --panel: #ffffff; --text: #1a1a1a; --muted: #6b7280;
+  --accent: #1877f2; --border: #e5e7eb; --hover: #f0f2f5;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #17181c; --panel: #1f2026; --text: #e8e8ea; --muted: #9aa0a8;
+    --accent: #3b9eff; --border: #2e3038; --hover: #282a31;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body, #app { height: 100%; }
+body { font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+       background: var(--bg); color: var(--text); font-size: 14px; }
+button { cursor: pointer; border: 1px solid var(--border); background: var(--panel);
+         color: var(--text); border-radius: 6px; padding: 5px 12px; }
+button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+input, select, textarea { background: var(--panel); color: var(--text);
+         border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px; }
+mark { background: #ffe066; color: #000; border-radius: 2px; padding: 0 1px; }
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
